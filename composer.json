@@ -8,5 +8,8 @@
             "name": "Spacexion",
             "email": "xion-teamionx@gmail.com"
         }
-    ]
+    ],
+    "autoload": {
+        "psr-4": { "JacksonPhp\\": "./" }
+    }
 }

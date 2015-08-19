@@ -1,0 +1,12 @@
+{
+    "name": "spacexion/JacksonPhp",
+    "type": "library",
+    "description": "Library like Jackson in Java, to map JSON to and from Object.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Spacexion",
+            "email": "xion-teamionx@gmail.com"
+        }
+    ]
+}

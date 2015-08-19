@@ -1,5 +1,5 @@
 {
-    "name": "spacexion/JacksonPhp",
+    "name": "spacexion/jacksonphp",
     "type": "library",
     "description": "Library like Jackson in Java, to map JSON to and from Object.",
     "license": "MIT",

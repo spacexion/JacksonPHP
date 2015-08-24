@@ -2,7 +2,7 @@
 
 /**
  * JacksonPhp<br/>
- * Java FastserXML/Jackson basic portage to PHP
+ * Java FasterXML/Jackson basic portage to PHP
  * 
  * @author Nicolas G�z�quel
  */

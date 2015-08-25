@@ -1,16 +1,14 @@
 <?php
 
-if (!class_exists("ObjectProperty")) {
-    require_once(str_replace('\\', '/', __DIR__ . "/") . "ObjectProperty.php");
-}
-if (!class_exists("JacksonAnnotation")) {
-    require_once(str_replace('\\', '/', __DIR__ . "/") . "../annotation/JacksonAnnotation.php");
-}
+namespace IonXLab\JacksonPhp\databind;
+
+use ReflectionClass;
+use IonXLab\JacksonPhp\annotation\JacksonAnnotation;
 
 /**
  * ObjectParser<br/>
  * Parse PHP objects in an array of ObjectProperty
- * @author Nicolas G�z�quel
+ * @author Nicolas Gézéquel
  */
 class ObjectParser {
 
@@ -51,7 +49,7 @@ class ObjectParser {
      * Parse object given in constructor or in the method in array of ObjectProperty
      * @param Object $object the object to parse
      * @param boolean $parseAnnotations if must parse annotations
-     * @return boolean no object given | array(ObjectProperty)
+     * @return boolean|ObjectProperty[]
      */
     public function parseObject($object = null, $parseAnnotations = null) {
         if ($object != null) {
@@ -75,20 +73,21 @@ class ObjectParser {
             $prop->setIsPrivate($property->isPrivate());
             $prop->setIsProtected($property->isProtected());
             $prop->setIsPublic($property->isPublic());
-            $prop->setGetter(($reflectionClass->hasMethod("get" . ucfirst($prop->getName())) && $reflectionClass->getMethod("get" . ucfirst($prop->getName()))->isPublic() ?
+            $prop->setHasGetter(($reflectionClass->hasMethod("get" . ucfirst($prop->getName())) && $reflectionClass->getMethod("get" . ucfirst($prop->getName()))->isPublic() ?
                             "get" . ucfirst($prop->getName()) : ""));
-            $prop->setSetter(($reflectionClass->hasMethod("set" . ucfirst($prop->getName())) && $reflectionClass->getMethod("set" . ucfirst($prop->getName()))->isPublic() ?
+            $prop->setHasSetter(($reflectionClass->hasMethod("set" . ucfirst($prop->getName())) && $reflectionClass->getMethod("set" . ucfirst($prop->getName()))->isPublic() ?
                             "set" . ucfirst($prop->getName()) : ""));
 
             if ($prop->isPublic()) {
-                if (!empty($property->getValue())) {
+                $propValue = $property->getValue();
+                if (!empty($propValue)) {
                     $prop->setValue($property->getValue());
-                } elseif ($prop->getGetter() != "") {
-                    $getter = $prop->getGetter();
+                } elseif ($prop->hasGetter() != "") {
+                    $getter = $prop->hasGetter();
                     $prop->setValue($this->object->$getter());
                 }
-            } elseif ($prop->getGetter() != "") {
-                $getter = $prop->getGetter();
+            } elseif ($prop->hasGetter() != "") {
+                $getter = $prop->hasGetter();
                 $prop->setValue($this->object->$getter());
             } else {
                 $prop->setValue(null);
@@ -201,11 +200,11 @@ class ObjectParser {
                         $parameters[$paramArray[0]] = preg_replace('/\"/', '', $paramArray[1]);
                     }
                 }
-                $var1 = $matches[4][$i];
+                //$var1 = $matches[4][$i];
 
                 $annotation->setName($name);
                 $annotation->setParameters($parameters);
-                $annotation->setVar1($var1);
+                //$annotation->setVar1($var1);
 
                 $annotations[] = $annotation;
             }

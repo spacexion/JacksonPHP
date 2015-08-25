@@ -1,8 +1,10 @@
 <?php
 
+namespace IonXLab\JacksonPhp\databind;
+
 /**
  * Represents a property of a class
- * @author Nicolas G�z�quel
+ * @author Nicolas Gezequel
  *
  */
 class ObjectProperty {
@@ -11,8 +13,8 @@ class ObjectProperty {
     private $value = null;
     private $defaultValue = null;
     private $annotations = array();
-    private $getter = "";
-    private $setter = "";
+    private $hasGetter = false;
+    private $hasSetter = false;
     private $public = false;
     private $protected = false;
     private $private = false;
@@ -94,39 +96,39 @@ class ObjectProperty {
     }
 
     /**
-     * Returns the getter value.
+     * Returns the hasGetter value.
      *
      * @return boolean
      */
-    public function getGetter() {
-        return $this->getter;
+    public function hasGetter() {
+        return $this->hasGetter;
     }
 
     /**
-     * Set the getter value.
+     * Set the hasGetter value.
      *
      * @param boolean $hasGetter
      */
-    public function setGetter($getter) {
-        $this->getter = $getter;
+    public function setHasGetter($hasGetter) {
+        $this->hasGetter = $hasGetter;
     }
 
     /**
-     * Returns the setter value.
+     * Returns the hasSetter value.
      *
      * @return boolean
      */
-    public function getSetter() {
-        return $this->setter;
+    public function hasSetter() {
+        return $this->hasSetter;
     }
 
     /**
-     * Set the setter value.
+     * Set the hasSetter value.
      *
-     * @param boolean $hasGetter
+     * @param boolean $hasSetter
      */
-    public function setSetter($setter) {
-        $this->setter = $setter;
+    public function setHasSetter($hasSetter) {
+        $this->hasSetter = $hasSetter;
     }
 
     /**

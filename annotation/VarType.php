@@ -1,8 +1,7 @@
 <?php
 
-if (!class_exists("JacksonAnnotation")) {
-    require_once("JacksonAnnotation.php");
-}
+namespace IonXLab\JacksonPhp\annotation;
+
 
 class VarType extends JacksonAnnotation {
 

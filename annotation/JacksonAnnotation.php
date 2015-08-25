@@ -1,5 +1,7 @@
 <?php
 
+namespace IonXLab\JacksonPhp\annotation;
+
 class JacksonAnnotation {
 
     /**

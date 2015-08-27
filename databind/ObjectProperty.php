@@ -5,7 +5,6 @@ namespace IonXLab\JacksonPhp\databind;
 /**
  * Represents a property of a class
  * @author Nicolas Gezequel
- *
  */
 class ObjectProperty {
 
@@ -15,12 +14,16 @@ class ObjectProperty {
     private $annotations = array();
     private $hasGetter = false;
     private $hasSetter = false;
+    private $getter = "";
+    private $setter = "";
     private $public = false;
     private $protected = false;
     private $private = false;
 
-    public function __construct() {
-        
+    private $isClassProperty = false;
+
+    public function __construct($isClassProperty=false) {
+        $this->isClassProperty = $isClassProperty;
     }
 
     /**
@@ -80,7 +83,7 @@ class ObjectProperty {
     /**
      * Returns the annotations value.
      *
-     * @return array(JacksonAnnotation)
+     * @return JacksonAnnotation[]
      */
     public function getAnnotations() {
         return $this->annotations;
@@ -185,6 +188,51 @@ class ObjectProperty {
         $this->private = $isPrivate;
     }
 
+    /**
+     * Set the property setter.
+     * @return string
+     */
+    public function getSetter() {
+        return $this->setter;
+    }
+
+    /**
+     * Returns the property setter
+     * @param string $setter
+     */
+    public function setSetter($setter) {
+        $this->setter = $setter;
+    }
+
+    /**
+     * Returns the property getter.
+     * @return string
+     */
+    public function getGetter() {
+        return $this->getter;
+    }
+
+    /**
+     * Set the property getter.
+     * @param string $getter
+     */
+    public function setGetter($getter) {
+        $this->getter = $getter;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isClassProperty() {
+        return $this->isClassProperty;
+    }
+
+    /**
+     * @param boolean $isClassProperty
+     */
+    public function setIsClassProperty($isClassProperty) {
+        $this->isClassProperty = $isClassProperty;
+    }
 }
 
 ?>

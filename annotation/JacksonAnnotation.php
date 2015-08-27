@@ -28,6 +28,8 @@ class JacksonAnnotation {
      */
     public function __construct($name = "jacksonannotation") {
         $this->name = $name;
+        $this->parameters = array();
+        $this->vars = array();
     }
 
     /**
@@ -49,7 +51,7 @@ class JacksonAnnotation {
     }
 
     /**
-     * Returns the parameters value.
+     * Returns the parameters.
      *
      * @return array
      */
@@ -58,7 +60,26 @@ class JacksonAnnotation {
     }
 
     /**
-     * Set the parameters value.
+     * Add a parameter.
+     *
+     * @param mixed $parameterName the parameter name (eg: id)
+     * @param mixed $parameterValue the parameter value (eg: 247)
+     */
+    public function addParameter($parameterName, $parameterValue) {
+        $this->parameters[$parameterName] = $parameterValue;
+    }
+
+    /**
+     * Add an array of parameters.
+     *
+     * @param string[] $parameters the parameters to add (eg: array(name=>value))
+     */
+    public function addParameters($parameters) {
+        $this->parameters = array_merge($this->parameters, $parameters);
+    }
+
+    /**
+     * Set the parameters.
      *
      * @param array $parameters
      */
@@ -73,6 +94,24 @@ class JacksonAnnotation {
      */
     public function getVars() {
         return $this->vars;
+    }
+
+    /**
+     * Add a var.
+     *
+     * @param string $var the var to add
+     */
+    public function addVar($var) {
+        $this->vars[] = $var;
+    }
+
+    /**
+     * Add an array of vars.
+     *
+     * @param string[] $vars the vars to add
+     */
+    public function addVars($vars) {
+        $this->vars = array_merge($this->vars, $vars);
     }
 
     /**

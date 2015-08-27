@@ -65,19 +65,38 @@ class ObjectParser {
         $props = array();
 
         $reflectionClass = new ReflectionClass($this->object);
+        if ($this->parseAnnotations) {
+            $annotationsClass = $this->parseAnnotations($reflectionClass->getDocComment());
+            $classProperty = new ObjectProperty(true);
+            $classProperty->setName("class_".$reflectionClass->getName());
+            $classProperty->setAnnotations($annotationsClass);
+            $props[$classProperty->getName()] = $classProperty;
+        }
+
+        // Analyze the class properties
         $properties = $reflectionClass->getProperties();
         foreach ($properties as $property) {
 
+            // Analyze the class property
             $prop = new ObjectProperty();
             $prop->setName($property->getName());
             $prop->setIsPrivate($property->isPrivate());
             $prop->setIsProtected($property->isProtected());
             $prop->setIsPublic($property->isPublic());
-            $prop->setHasGetter(($reflectionClass->hasMethod("get" . ucfirst($prop->getName())) && $reflectionClass->getMethod("get" . ucfirst($prop->getName()))->isPublic() ?
-                            "get" . ucfirst($prop->getName()) : ""));
-            $prop->setHasSetter(($reflectionClass->hasMethod("set" . ucfirst($prop->getName())) && $reflectionClass->getMethod("set" . ucfirst($prop->getName()))->isPublic() ?
-                            "set" . ucfirst($prop->getName()) : ""));
-
+            $prop->setHasGetter((
+                $reflectionClass->hasMethod("get" . ucfirst($prop->getName()))
+                && $reflectionClass->getMethod("get" . ucfirst($prop->getName()))->isPublic() ?
+                    "get".ucfirst($prop->getName()) : false));
+            if($prop->hasGetter()) {
+                $prop->setGetter("get".ucfirst($prop->getName()));
+            }
+            $prop->setHasSetter((
+                $reflectionClass->hasMethod("set" . ucfirst($prop->getName()))
+                && $reflectionClass->getMethod("set" . ucfirst($prop->getName()))->isPublic() ?
+                    "set" . ucfirst($prop->getName()) : true));
+            if($prop->hasSetter()) {
+                $prop->setSetter("set".ucfirst($prop->getName()));
+            }
             if ($prop->isPublic()) {
                 $propValue = $property->getValue();
                 if (!empty($propValue)) {
@@ -93,15 +112,18 @@ class ObjectParser {
                 $prop->setValue(null);
             }
 
+            // Analyze the class property annotation
             if ($this->parseAnnotations) {
                 $docblock = $property->getDocComment();
-                $annotations = $this->parseAnnotations($docblock);
-                $prop->setAnnotations($annotations);
+                $prop->setAnnotations($this->parseAnnotations($docblock));
             }
 
-            $props[] = $prop;
+            $props[$prop->getName()] = $prop;
         }
 
+//        echo "<pre>";
+//        print_r($props);
+//        echo "</pre>";
         return $props;
     }
 
@@ -109,110 +131,73 @@ class ObjectParser {
      * Parse Annotations in DocBlock
      *
      * @param string $docblock Full method docblock
-     *
-     * @return array
+     * @return JacksonAnnotation[]
      */
-    protected function parseAnnotations($docblock) {
+     protected function parseAnnotations($docblock) {
         $annotations = array();
-        // Strip away the docblock header and footer
-        // to ease parsing of one line annotations
+
         $docblock = substr($docblock, 3, -2);
 
-        // match '@annotation(.*?)$'
-        $annotationNameRegex = '/@([A-Za-z0-9_-]+)(.*)/';
-        if (preg_match_all($annotationNameRegex, $docblock, $annotationNameMatches)) {
+        $regexAnnotationName = '/@([A-Za-z0-9_-]+)(.*)/';
+        if (preg_match_all($regexAnnotationName, $docblock, $annotationNameMatches)) {
 
-            echo "AnnotationsName<br/>";
-            echo "<pre>";
-            print_r($annotationNameMatches);
-            echo "</pre>";
+//            echo "<pre>";
+//            print_r($annotationNameMatches);
+//            echo "</pre>";
 
-            $annotationsName = $annotationNameMatches[1];
-
-            foreach ($annotationsName as $key => $annotationName) {
+            // Loop for each annotation
+            foreach($annotationNameMatches[2] as $key=>$annotationParameters) {
                 $annotation = new JacksonAnnotation();
-                $annotation->setName($annotationName);
+                $annotation->setName($annotationNameMatches[1][$key]);
 
-                // match '(param=value,param2=value)(.*?)'
-                $annotationParamsRegex = '/\(([A-Za-z0-9\_\-\=\",\w\t\r\n]*?)\)(.*)/';
-                if (preg_match($annotationParamsRegex, $annotationNameMatches[2][$key], $annotationParamsMatches)) {
+//                echo $annotationNameMatches[0][$key]."<br>";
 
-                    echo "Params(" . $annotationName . ")<br/>";
-                    echo "<pre>";
-                    print_r($annotationParamsMatches);
-                    echo "</pre>";
+                // Parse in-parenthesis parameters and between space parameters
+                $regexAnnotationParenthesisParameters = '/\((.*)\)(.*)/';
+                if(preg_match($regexAnnotationParenthesisParameters, $annotationParameters, $annotationParenthesisParameters)) {
+//                    echo "0<pre>";
+//                    print_r($annotationParenthesisParameters);
+//                    echo "</pre>";
 
-                    $annotationParams = $annotationParamsMatches[1];
-                    $annotationParams = preg_replace('/[\w\t]/', '', $annotationParams);
+                    // Split in-parenthesis parameters by ','
+                    $annotationEqualParameters = preg_split('/\s*,+\s*/', $annotationParenthesisParameters[1], -1, PREG_SPLIT_NO_EMPTY);
+//                    echo "1<pre>";
+//                    print_r($annotationEqualParameters);
+//                    echo "</pre>";
 
-                    // match 'param="value"' or 'param=true'
-                    $annotationParamRegex = '/([A-Za-z0-9]+)\=[\"\']{0,1}([A-Za-z0-9]*)[\"\']{0,1}/';
-                    if (preg_match_all($annotationParamRegex, $docblock, $annotationParamMatches)) {
-
-                        echo "Param<br/>";
-                        echo "<pre>";
-                        print_r($annotationParamMatches);
-                        echo "</pre>";
+                    $regexEqualParameter = '/(.*?)\s*\=\s*[\"\']{1}(.*?)[\"\']{1}/';
+                    foreach($annotationEqualParameters as $annotationEqualParameter) {
+                        if(preg_match($regexEqualParameter, $annotationEqualParameter, $equalParameterMatch)) {
+//                            echo "2<pre>";
+//                            print_r($equalParameterMatch);
+//                            echo "</pre>";
+                            $annotation->addParameter($equalParameterMatch[1], $equalParameterMatch[2]);
+                        }
                     }
+
+                    // Split remaining between-spaces vars
+                    $annotationSpaceVars = preg_split('/\s+/', $annotationParenthesisParameters[2], -1, PREG_SPLIT_NO_EMPTY);
+                    $annotation->addVars($annotationSpaceVars);
+//                    echo "3a<pre>";
+//                    print_r($annotationSpaceVars);
+//                    echo "</pre>";
+                // There is no in-parenthesis parameters so only parse between space parameters
+                } else {
+                    $annotationSpaceVars = preg_split('/\s+/', $annotationParameters, -1, PREG_SPLIT_NO_EMPTY);
+                    $annotation->addVars($annotationSpaceVars);
+//                    echo "3b<pre>";
+//                    print_r($annotationSpaceVars);
+//                    echo "</pre>";
                 }
-
-
-                $annotations[] = $annotation;
+                $annotations[$annotation->getName()] = $annotation;
             }
         }
+//        echo "4<pre>";
+//        print_r($annotations);
+//        echo "</pre>";
 
         return $annotations;
     }
-
-    /**
-     * Parse Annotations in DocBlock
-     *
-     * @param string $docblock Full method docblock
-     *
-     * @return array
-     */
-    protected function parseAnnotations2($docblock) {
-        $annotations = array();
-        // Strip away the docblock header and footer
-        // to ease parsing of one line annotations
-        $docblock = substr($docblock, 3, -2);
-
-        //parse '@Annot value' format
-        //$re = '/@(?P<name>[A-Za-z_-]+)(?:[ \t]+(?P<value>.*?))?[ \t]*\r?$/m';
-        //@annot(test=test) var1 var2 var3(.*?)$
-        $re2 = '/@([A-Za-z_-]+)(\(([A-Za-z_-\=\", \t\r\n]*?)\))*[ \t]*([^ \t]+)*$/m';
-        if (preg_match_all($re2, $docblock, $matches)) {
-            $numMatches = count($matches[0]);
-
-            //echo "<pre>";
-            //print_r($matches);
-            //echo "</pre>";
-
-            for ($i = 0; $i < $numMatches; $i++) {
-                $annotation = new JacksonAnnotation();
-
-                $name = $matches[1][$i];
-                $parameters = array();
-                if ($matches[3][$i] != "") {
-                    $paramStr = preg_replace("/ /", '', $matches[3][$i]);
-                    foreach (explode(',', $paramStr) as $param) {
-                        $paramArray = explode('=', $param);
-                        $parameters[$paramArray[0]] = preg_replace('/\"/', '', $paramArray[1]);
-                    }
-                }
-                //$var1 = $matches[4][$i];
-
-                $annotation->setName($name);
-                $annotation->setParameters($parameters);
-                //$annotation->setVar1($var1);
-
-                $annotations[] = $annotation;
-            }
-        }
-
-        return $annotations;
-    }
-
 }
 
 ?>

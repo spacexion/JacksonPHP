@@ -1,6 +1,7 @@
 <?php
 
 namespace IonXLab\JacksonPhp\databind;
+use Hashids\Hashids;
 
 /**
  * Allow to map Json data format to/from an Object
@@ -8,12 +9,19 @@ namespace IonXLab\JacksonPhp\databind;
  */
 class ObjectMapper {
 
-    public function __construct() {
-        
-    }
+    private $useAnnotations;
+    private $hashIds;
+    private $hashIdsSalt;
 
-    private function __constructMapper($mapper) {
-        
+    /**
+     * @param bool $useAnnotations if mapper has to use entities annotations
+     * @param bool $hashIds if mapper use
+     * @param string $hashIdsSalt the salt to correctly hash the ids
+     */
+    public function __construct($useAnnotations=true, $hashIds=true, $hashIdsSalt="JacksonPhpIs#TheBestMapperEverIn2015!") {
+        $this->useAnnotations = $useAnnotations;
+        $this->hashIds = $hashIds;
+        $this->hashIdsSalt = $hashIdsSalt;
     }
 
     /**
@@ -23,19 +31,6 @@ class ObjectMapper {
      * @return null|Object
      */
     public function readValue($json, $object) {
-        // Check provided vars
-        if (!is_object($object)) {
-            return null;
-        }
-        if (json_decode($json) == null) {
-            return null;
-        }
-
-        $array = json_decode($json, true);
-        if(!is_array($array)) {
-            return null;
-        }
-
         $object = $this->mapJsonToObject($json, $object);
 
         return $object;
@@ -43,9 +38,11 @@ class ObjectMapper {
 
     /**
      * Write Object to Json
+     * @param Object $object the object to map
+     * @return string
      */
-    public function writeValue($out, $object) {
-        $json = null;
+    public function writeValue($object) {
+        $json = $this->mapObjectToJson($object);
 
         return $json;
     }
@@ -53,37 +50,77 @@ class ObjectMapper {
     /**
      * @param string $json the json string
      * @param Object $object the object to map json over
-     * @return null|Object
+     * @return boolean|Object
      */
     private function mapJsonToObject($json, $object) {
         // Check provided vars
         if (!is_object($object)) {
-            return null;
+            return false;
         }
         if (json_decode($json) == null) {
-            return null;
+            return false;
         }
 
-        $array = json_decode($json, true);
-        if(!is_array($array)) {
-            return null;
+        $arrayJson = json_decode($json, true);
+        if(!is_array($arrayJson)) {
+            return false;
         }
 
         $objectParser = new ObjectParser();
 
-        $properties = $objectParser->parseObject($object, true);
+        $properties = $objectParser->parseObject($object, $this->useAnnotations);
 
         foreach ($properties as $property) {
-            //$property = new ObjectProperty();
-            if (array_key_exists($property->getName(), $array) && $property->getSetter() != "") {
+            if (array_key_exists($property->getName(), $arrayJson) && $property->hasSetter()) {
+                $jsonProperty = $arrayJson[$property->getName()];
 
-                $setProperty = $property->getSetter();
-                $object->$setProperty($array[$property->getName()]);
+                if(array_key_exists("Id", $property->getAnnotations()) && $this->hashIds) {
+                    $hashids = new Hashids($this->hashIdsSalt, 8);
+                    $decodedId = $hashids->decode($jsonProperty);
+                    $jsonProperty = (count($decodedId)>0 ? $decodedId[0] : "");
+                }
+                $setterProperty = $property->getSetter();
+                $object->$setterProperty($jsonProperty);
             }
         }
-        echo "<pre>";
-        print_r($object);
-        echo "</pre>";
+//        echo "<pre>";
+//        print_r($object);
+//        echo "</pre>";
+        return $object;
+    }
+
+    /**
+     * @param Object $object the object to map into Json
+     * @return string
+     */
+    private function mapObjectToJson($object) {
+        $json = array();
+        if(!is_object($object)) {
+            return false;
+        }
+
+        $objectParser = new ObjectParser();
+
+        $properties = $objectParser->parseObject($object, $this->useAnnotations);
+        foreach ($properties as $property) {
+            if($property->hasGetter()) {
+                $getter = $property->getGetter();
+                $value = $object->$getter();
+                // Property is and ID
+                if(array_key_exists("Id", $property->getAnnotations()) && $this->hashIds) {
+                    $hashids = new Hashids($this->hashIdsSalt, 8);
+                    $value = $hashids->encode($value);
+                }
+                // Property has Var type defined
+                if(array_key_exists("var", $property->getAnnotations())) {
+                    
+                }
+                $json[$property->getName()] = $value;
+            }
+        }
+
+
+        return json_encode($json);
     }
 }
 

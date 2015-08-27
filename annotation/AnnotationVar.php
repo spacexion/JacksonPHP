@@ -3,12 +3,12 @@
 namespace IonXLab\JacksonPhp\annotation;
 
 
-class VarType extends JacksonAnnotation {
+class AnnotationVar extends JacksonAnnotation {
 
     private $description;
 
     public function __construct() {
-        parent::__construct("VarType");
+        parent::__construct("var");
     }
 
     /**

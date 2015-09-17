@@ -1,27 +1,27 @@
 <?php
 
 namespace IonXLab\JacksonPhp\annotation;
+use Hashids\Hashids;
+use IonXLab\JacksonPhp\JacksonPhp;
 use IonXLab\JacksonPhp\util\ArrayCollection;
 
 /**
- * Class AnnotationVar
+ * Class AnnotationId
  *
- * Allow to define attribute type ("boolean"|"integer"|"double"|"string"|"array"|"MyClassName")
+ * Allow to define that this property is the id of the entity
  *
  * @package IonXLab\JacksonPhp\annotation
  */
-class AnnotationVar extends JacksonAnnotation implements JacksonAnnotationInterface {
+class AnnotationId extends JacksonAnnotation implements JacksonAnnotationInterface {
 
     /**
      * @param array $parameters the parameters defined in "instance" of the annotation
      * @param array $variables the variables defined in "instance" of the annotation
      */
     public function __construct($parameters, $variables) {
-        $annotationVariables = new ArrayCollection("IonXLab\\JacksonPhp\\annotation\\JacksonAnnotationArgument");
-        $annotationVariables->add(new JacksonAnnotationArgument(0, "string"));
-        parent::__construct("var",
+        parent::__construct("Id",
             null,
-            $annotationVariables,
+            null,
             $parameters,
             $variables);
     }
@@ -34,7 +34,13 @@ class AnnotationVar extends JacksonAnnotation implements JacksonAnnotationInterf
      * @return mixed
      */
     public function process($jsonValue, $objectValue, $jsonToObject = true) {
-
+        $hashids = new Hashids(JacksonPhp::$hashIdsSalt, 8);
+        if($jsonToObject) {
+            $decodedId = $hashids->decode($jsonValue);
+            return (count($decodedId)>0 ? $decodedId[0] : "");
+        } else {
+            return $hashids->encode($objectValue);
+        }
     }
 }
 

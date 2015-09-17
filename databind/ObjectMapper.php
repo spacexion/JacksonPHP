@@ -1,7 +1,7 @@
 <?php
 
 namespace IonXLab\JacksonPhp\databind;
-use Hashids\Hashids;
+use IonXLab\JacksonPhp\JacksonPhp;
 
 /**
  * Allow to map Json data format to/from an Object
@@ -10,18 +10,22 @@ use Hashids\Hashids;
 class ObjectMapper {
 
     private $useAnnotations;
-    private $hashIds;
-    private $hashIdsSalt;
+
 
     /**
      * @param bool $useAnnotations if mapper has to use entities annotations
      * @param bool $hashIds if mapper use
      * @param string $hashIdsSalt the salt to correctly hash the ids
      */
-    public function __construct($useAnnotations=true, $hashIds=true, $hashIdsSalt="JacksonPhpIs#TheBestMapperEverIn2015!") {
+    public function __construct($useAnnotations=true, $hashIds=null, $hashIdsSalt=null) {
         $this->useAnnotations = $useAnnotations;
-        $this->hashIds = $hashIds;
-        $this->hashIdsSalt = $hashIdsSalt;
+
+        if(!is_null($hashIds)) {
+            JacksonPhp::$hashIds = $hashIds;
+        }
+        if(!is_null($hashIdsSalt)) {
+            JacksonPhp::$hashIdsSalt = $hashIdsSalt;
+        }
     }
 
     /**
@@ -74,10 +78,8 @@ class ObjectMapper {
             if (array_key_exists($property->getName(), $arrayJson) && $property->hasSetter()) {
                 $jsonProperty = $arrayJson[$property->getName()];
 
-                if(array_key_exists("Id", $property->getAnnotations()) && $this->hashIds) {
-                    $hashids = new Hashids($this->hashIdsSalt, 8);
-                    $decodedId = $hashids->decode($jsonProperty);
-                    $jsonProperty = (count($decodedId)>0 ? $decodedId[0] : "");
+                foreach($property->getAnnotations() as $annotation) {
+                    $jsonProperty = $annotation->process($jsonProperty, $property->getValue(), true);
                 }
                 $setterProperty = $property->getSetter();
                 $object->$setterProperty($jsonProperty);
@@ -106,19 +108,13 @@ class ObjectMapper {
             if($property->hasGetter()) {
                 $getter = $property->getGetter();
                 $value = $object->$getter();
-                // Property is and ID
-                if(array_key_exists("Id", $property->getAnnotations()) && $this->hashIds) {
-                    $hashids = new Hashids($this->hashIdsSalt, 8);
-                    $value = $hashids->encode($value);
-                }
-                // Property has Var type defined
-                if(array_key_exists("var", $property->getAnnotations())) {
-                    
+
+                foreach($property->getAnnotations() as $annotation) {
+                    $value = $annotation->process(null, $property->getValue(), false);
                 }
                 $json[$property->getName()] = $value;
             }
         }
-
 
         return json_encode($json);
     }

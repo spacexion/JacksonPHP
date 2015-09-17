@@ -4,24 +4,26 @@ namespace IonXLab\JacksonPhp\annotation;
 use IonXLab\JacksonPhp\util\ArrayCollection;
 
 /**
- * Class AnnotationVar
+ * Class AnnotationAccess
  *
- * Allow to define attribute type ("boolean"|"integer"|"double"|"string"|"array"|"MyClassName")
+ * Allow to define access rights of read or write with level authentication
+ * (integer where 0=SuperAdmin, 1=Admin, 2=moderator .... to the infinite :) )
  *
  * @package IonXLab\JacksonPhp\annotation
  */
-class AnnotationVar extends JacksonAnnotation implements JacksonAnnotationInterface {
+class AnnotationAccess extends JacksonAnnotation implements JacksonAnnotationInterface {
 
     /**
      * @param array $parameters the parameters defined in "instance" of the annotation
      * @param array $variables the variables defined in "instance" of the annotation
      */
     public function __construct($parameters, $variables) {
-        $annotationVariables = new ArrayCollection("IonXLab\\JacksonPhp\\annotation\\JacksonAnnotationArgument");
-        $annotationVariables->add(new JacksonAnnotationArgument(0, "string"));
-        parent::__construct("var",
+        $annotationParameters = new ArrayCollection("IonXLab\\JacksonPhp\\annotation\\JacksonAnnotationArgument");
+        $annotationParameters->addAt("read", new JacksonAnnotationArgument("read", "integer"));
+        $annotationParameters->addAt("write", new JacksonAnnotationArgument("write", "integer"));
+        parent::__construct("access",
+            $annotationParameters,
             null,
-            $annotationVariables,
             $parameters,
             $variables);
     }

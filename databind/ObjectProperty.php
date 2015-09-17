@@ -83,7 +83,7 @@ class ObjectProperty {
     /**
      * Returns the annotations value.
      *
-     * @return JacksonAnnotation[]
+     * @return \IonXLab\JacksonPhp\annotation\JacksonAnnotation[]
      */
     public function getAnnotations() {
         return $this->annotations;
@@ -92,7 +92,7 @@ class ObjectProperty {
     /**
      * Set the annotations value.
      *
-     * @param array(JacksonAnnotation) $annotations
+     * @param \IonXLab\JacksonPhp\annotation\JacksonAnnotation[] $annotations
      */
     public function setAnnotations($annotations) {
         $this->annotations = $annotations;

@@ -147,8 +147,9 @@ class ObjectParser {
 
             // Loop for each annotation
             foreach($annotationNameMatches[2] as $key=>$annotationParameters) {
-                $annotation = new JacksonAnnotation();
-                $annotation->setName($annotationNameMatches[1][$key]);
+                $annotationName = $annotationNameMatches[1][$key];
+                $annotationParams = array();
+                $annotationVars = array();
 
 //                echo $annotationNameMatches[0][$key]."<br>";
 
@@ -171,25 +172,30 @@ class ObjectParser {
 //                            echo "2<pre>";
 //                            print_r($equalParameterMatch);
 //                            echo "</pre>";
-                            $annotation->addParameter($equalParameterMatch[1], $equalParameterMatch[2]);
+                            $annotationParams[$equalParameterMatch[1]] = $equalParameterMatch[2];
                         }
                     }
 
                     // Split remaining between-spaces vars
                     $annotationSpaceVars = preg_split('/\s+/', $annotationParenthesisParameters[2], -1, PREG_SPLIT_NO_EMPTY);
-                    $annotation->addVars($annotationSpaceVars);
+                    $annotationVars[] = $annotationSpaceVars;
 //                    echo "3a<pre>";
 //                    print_r($annotationSpaceVars);
 //                    echo "</pre>";
                 // There is no in-parenthesis parameters so only parse between space parameters
                 } else {
                     $annotationSpaceVars = preg_split('/\s+/', $annotationParameters, -1, PREG_SPLIT_NO_EMPTY);
-                    $annotation->addVars($annotationSpaceVars);
+                    $annotationVars[] = $annotationSpaceVars;
 //                    echo "3b<pre>";
 //                    print_r($annotationSpaceVars);
 //                    echo "</pre>";
                 }
-                $annotations[$annotation->getName()] = $annotation;
+
+                // instanciate the right jacksonphp annotation, if it does not exists we don't keep it !
+                $annotation = JacksonAnnotation::getAnnotation($annotationName, $annotationParams, $annotationVars);
+                if($annotation!=null) {
+                    $annotations[$annotation->getName()] = $annotation;
+                }
             }
         }
 //        echo "4<pre>";

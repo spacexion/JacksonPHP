@@ -9,10 +9,12 @@ namespace IonXLab\JacksonPhp;
  */
 class JacksonPhp {
 
+    public static $hashIds = true;
+    public static $hashIdsSalt = "JacksonPhp#IsTheBestMapperEverIn2015!";
+
     public function __constructor() {
         
     }
-
 }
 
 ?>
